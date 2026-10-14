@@ -2,6 +2,8 @@ repositories {
     mavenCentral()
     maven { url 'https://repo.dairy.foundation/releases/'}
     google() // Needed for androidx
+    maven { url = 'https://jitpack.io'}
+    maven { url = 'https://maven.brott.dev/'}
 }
 
 dependencies {
@@ -17,4 +19,11 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'
     implementation 'com.pedropathing:tuning:1.0.1'
+
+    //FTC-AutoTube - relay feedback PID/PIDF auto tuner
+    implementation 'dev.ftcautotune.FtcAutoTune:pidautotuner-core:v1.4.3'
+    implementation 'dev.ftcautotune.FtcAutoTune:pidautotuner-ftc:v1.4.3'
+    implementation('com.acmerobotics.dashboard:dashboard:0.4.16'){
+        exclude group: 'org.firstinspires.ftc'
+    }
 }
