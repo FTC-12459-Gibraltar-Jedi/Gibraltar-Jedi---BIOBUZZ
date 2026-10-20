@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedro;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -56,7 +57,19 @@ public class Jedi_Tele extends OpMode {
                 follower.pose().heading()
         );
         ManualDrive.driveOrHold(follower, powers);
+
+        // relocalise button
+        if (gamepad1.yWasPressed()) {
+            Pose cornerPose = new Pose(10.5, 10.5, Math.toRadians(0));
+            // On the fly Pose creation, we dont recommend this for Autonomous. Only accepts radians for heading
+            follower.setPose(cornerPose); // overrides our pose
+        }
+
         follower.update();
+        Pose robotPose = follower.pose(); // returns a Pose object
+        telemetry.addData("Robot X", robotPose.x());
+        telemetry.addData("Robot Y", robotPose.y());
+        telemetry.addData("Robot Heading", Math.toDegrees(robotPose.heading()));
 
 
         //----Turret Logic----

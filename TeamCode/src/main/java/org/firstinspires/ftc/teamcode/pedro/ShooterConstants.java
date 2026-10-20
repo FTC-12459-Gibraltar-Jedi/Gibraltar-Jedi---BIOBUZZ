@@ -15,7 +15,7 @@ public class ShooterConstants {
     public static final double kF = 0.000421;
 
     // Target Speed in RPM
-    public static final double TARGET_RPM = 2800.0;
+    public static final double TARGET_RPM = 3100;
 
     // Helper Calculations & Conversions
     public static double getTargetTicksPerSec() {
