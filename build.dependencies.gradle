@@ -19,6 +19,7 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'
     implementation 'com.pedropathing:tuning:1.0.1'
+    implementation 'com.pedropathing.ivy:pedro:1.1.1'
 
     //FTC-AutoTube - relay feedback PID/PIDF auto tuner
     implementation 'dev.ftcautotune.FtcAutoTune:pidautotuner-core:v1.4.3'
