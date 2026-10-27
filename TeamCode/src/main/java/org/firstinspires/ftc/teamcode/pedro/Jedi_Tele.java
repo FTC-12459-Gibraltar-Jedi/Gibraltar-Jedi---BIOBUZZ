@@ -38,6 +38,7 @@ import java.util.Locale;
  *   Left trigger ..... Hold for AUTO AIM (turret, hood, and RPM follow the robot; flywheel spins)
  *   Right stick X .... Manual turret
  *   Right stick Y .... Manual hood
+ *   X ................ Turret forward reset (point turret STRAIGHT FORWARD first)
  *   Dpad down/left/up  Close / middle / far preset (SHOT_TABLE rows 0 / 1 / 2)
  *   Bumpers R / L .... +/- RPM (for tuning)
  *   Back ............. Hood load mode on/off (hood swap; flywheel forced off)
@@ -53,7 +54,7 @@ public class Jedi_Tele extends OpMode {
 
     private static final double SLOW_SPEED = 0.5;          // drive speed without left bumper
     private static final double RPM_STEP = 50;             // RPM per bumper press (gamepad 2)
-    private static final double YAW_STICK_SPEED = 0.01;    // manual turret speed
+    private static final double YAW_STICK_SPEED = 2.0;     // manual turret speed (degrees per loop)
     private static final double PITCH_STICK_SPEED = 0.005; // manual hood speed
     private static final double TRIGGER_THRESHOLD = 0.1;   // how far a trigger must be pulled to count
 
@@ -191,6 +192,9 @@ public class Jedi_Tele extends OpMode {
         // ---- back: hood load mode ----
         if (gamepad2.backWasPressed()) shooter.toggleLoading();
 
+        // ---- X: turret forward reset (turret must be pointed straight forward) ----
+        if (gamepad2.xWasPressed()) shooter.zeroTurret();
+
         // ---- which goal: our color, on whichever half of the field we're on ----
         Pose goal = shooter.goalFor(robotPose, blueAlliance);
         goalDistance = Shooter.distanceToGoal(robotPose, goal);
@@ -207,7 +211,7 @@ public class Jedi_Tele extends OpMode {
         } else if (autoAim) {
             shooter.aimAt(robotPose, goal);
         } else {
-            shooter.adjustYaw(gamepad2.right_stick_x * YAW_STICK_SPEED);
+            shooter.adjustYaw(-gamepad2.right_stick_x * YAW_STICK_SPEED);   // stick right = turret right
             shooter.adjustPitch(gamepad2.right_stick_y * PITCH_STICK_SPEED);
             if (gamepad2.rightBumperWasPressed()) shooter.adjustRpm(RPM_STEP);
             if (gamepad2.leftBumperWasPressed())  shooter.adjustRpm(-RPM_STEP);
@@ -271,7 +275,8 @@ public class Jedi_Tele extends OpMode {
         telemetry.addData("Auto Aim", autoAim ? "ON" : "off");
         telemetry.addData("Aiming At", alliance + (shooter.isOnBackHalf() ? " BACK" : " AUDIENCE") + " goal");
         telemetry.addData("Goal Distance", String.format(Locale.US, "%.1f in", goalDistance));
-        telemetry.addData("Turret (yaw)", String.format(Locale.US, "%.3f", shooter.getYaw()));
+        telemetry.addData("Turret", String.format(Locale.US, "%.1f° / %.1f° target   (power %.2f)",
+                shooter.getTurretAngleDeg(), shooter.getTurretTargetDeg(), shooter.getTurretPower()));
         telemetry.addData("Hood (pitch)", String.format(Locale.US, "%.3f", shooter.getPitch()));
 
         telemetry.addLine("──────── FLYWHEEL ────────");

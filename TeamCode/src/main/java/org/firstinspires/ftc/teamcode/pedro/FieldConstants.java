@@ -21,8 +21,8 @@ import com.pedropathing.math.Pose;
  *                 Y = 144  (back wall)
  *          ┌──────────────────────────────┐
  *          │                              │
- *   BLUE   │                              │   RED
- *  drivers │                              │  drivers
+ *   RED    │                              │   BLUE
+ *  drivers │  → faces 0°        180° ←    │  drivers
  *  (x = 0) │                              │ (x = 144)
  *          │                              │
  *          └──────────────────────────────┘
@@ -36,8 +36,8 @@ public class FieldConstants {
     // Where TeleOp thinks the robot is when it starts WITHOUT running an auto first.
     // (After an auto, TeleOp uses the auto's final position instead.)
 
-    public static final Pose BLUE_START_POSE = new Pose(24, 72, Math.toRadians(0));
-    public static final Pose RED_START_POSE  = new Pose(120, 72, Math.toRadians(180));
+    public static final Pose BLUE_START_POSE = new Pose(120, 72, Math.toRadians(180));
+    public static final Pose RED_START_POSE  = new Pose(24, 72, Math.toRadians(0));
 
 
     //==[DRIVER DIRECTION]==========================================================================
@@ -45,8 +45,8 @@ public class FieldConstants {
     //  • Pushing the left stick forward drives this way.
     //  • Gamepad 1 Y resets the robot's heading to this.
 
-    public static final double BLUE_DRIVER_HEADING_DEG = 0;
-    public static final double RED_DRIVER_HEADING_DEG  = 180;
+    public static final double BLUE_DRIVER_HEADING_DEG = 180;   // blue drivers at x = 144, facing -X
+    public static final double RED_DRIVER_HEADING_DEG  = 0;     // red drivers at x = 0, facing +X
 
 
     //==[RELOCALIZATION CORNERS]====================================================================
@@ -55,11 +55,13 @@ public class FieldConstants {
     //  2. Press the button.
     // Left/right are as seen by YOUR drivers. For an 18" robot the center is 9" from each wall.
 
-    public static final Pose BLUE_LEFT_CORNER  = new Pose(9, 135, Math.toRadians(0));
-    public static final Pose BLUE_RIGHT_CORNER = new Pose(9, 9, Math.toRadians(0));
+    // The heading must be the way the robot REALLY faces in the corner (away from your drivers),
+    // so it should match that alliance's DRIVER HEADING above.
+    public static final Pose BLUE_LEFT_CORNER  = new Pose(133.5, 8.5, Math.toRadians(180));
+    public static final Pose BLUE_RIGHT_CORNER = new Pose(133.5, 133, Math.toRadians(180));
 
-    public static final Pose RED_LEFT_CORNER   = new Pose(135, 9, Math.toRadians(180));
-    public static final Pose RED_RIGHT_CORNER  = new Pose(135, 135, Math.toRadians(180));
+    public static final Pose RED_LEFT_CORNER   = new Pose(8.5, 133.5, Math.toRadians(0));
+    public static final Pose RED_RIGHT_CORNER  = new Pose(8.5, 8.5, Math.toRadians(0));
 
 
     //==[GOALS]=====================================================================================
@@ -67,11 +69,11 @@ public class FieldConstants {
     // Auto aim shoots at OUR alliance's goal on whichever half the robot is on:
     //   AUDIENCE goal = robot is below the midline      BACK goal = robot is above the midline
 
-    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(12, 12, 0);
-    public static final Pose BLUE_GOAL_BACK     = new Pose(12, 132, 0);
+    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(84, 50, 0);
+    public static final Pose BLUE_GOAL_BACK     = new Pose(84, 90, 0);
 
-    public static final Pose RED_GOAL_AUDIENCE  = new Pose(132, 12, 0);
-    public static final Pose RED_GOAL_BACK      = new Pose(132, 132, 0);
+    public static final Pose RED_GOAL_AUDIENCE  = new Pose(58, 50, 0);
+    public static final Pose RED_GOAL_BACK      = new Pose(58, 90, 0);
 
     public static final double FIELD_MIDLINE_Y  = 72;
     public static final double MIDLINE_DEADBAND = 2;   // inches past the line before switching, so it doesn't flicker

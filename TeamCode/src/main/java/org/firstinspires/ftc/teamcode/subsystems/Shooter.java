@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.pedro.ShooterConstants;
 /*
  * ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║  SHOOTER                                                                                     ║
- * ║  Flywheel + turret (yaw servo) + hood (pitch servo). Used by TeleOp AND autonomous.          ║
+ * ║  Flywheel + turret (yaw motor) + hood (pitch servo). Used by TeleOp AND autonomous.          ║
  * ║                                                                                              ║
  * ║  How to use it:  set targets (aimAt, applyPreset, setRunning, ...) then call update()        ║
  * ║                  ONCE every loop — update() is what actually moves the hardware.             ║
@@ -33,13 +33,14 @@ public class Shooter {
     // Names must match the robot configuration on the Driver Station.
 
     private final DcMotorEx motor;        // "shooter"
-    private final Servo yawServo;         // "yawServo"
+    private final DcMotorEx turretMotor;  // "turret"
     private final Servo pitchServo;       // "pitchServo"
 
 
     //==[STATE]=====================================================================================
 
-    private double yaw = ShooterConstants.YAW_CENTER;       // turret servo target
+    private double turretTargetDeg = 0;                     // turret target, 0 = straight forward, + = left
+    private double turretAngleDeg = 0;                      // turret actual angle from the encoder
     private double pitch = ShooterConstants.PITCH_MIN;      // hood servo target
     private double targetRpm = ShooterConstants.TARGET_RPM; // flywheel target
     private boolean running = false;                        // flywheel on/off
@@ -52,6 +53,10 @@ public class Shooter {
     private double currentRpm = 0.0;
     private double power = 0.0;
 
+    // turret PID bookkeeping
+    private double turretLastError = 0.0;
+    private double turretPower = 0.0;
+
 
     //==[SETUP]=====================================================================================
 
@@ -60,23 +65,52 @@ public class Shooter {
         motor.setDirection(ShooterConstants.REVERSED ? DcMotorEx.Direction.REVERSE : DcMotorEx.Direction.FORWARD);
         motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        yawServo = hardwareMap.get(Servo.class, "yawServo");
+        // turret encoder is NOT reset here, so its zero carries over from auto into TeleOp
+        turretMotor = hardwareMap.get(DcMotorEx.class, "turret");
+        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         pitchServo = hardwareMap.get(Servo.class, "pitchServo");
+    }
+
+    // Call with the turret pointed STRAIGHT FORWARD: makes that position 0°.
+    public void zeroTurret() {
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        turretTargetDeg = 0;
+        turretAngleDeg = 0;
+        turretLastError = 0;
     }
 
 
     //==[UPDATE — CALL EVERY LOOP]==================================================================
 
     public void update() {
-        // ---- servos ----
-        yaw = clamp(yaw, ShooterConstants.YAW_MIN, ShooterConstants.YAW_MAX);
-        pitch = clamp(pitch, ShooterConstants.PITCH_MIN, ShooterConstants.PITCH_MAX);
-        yawServo.setPosition(yaw);
-        pitchServo.setPosition(loading ? ShooterConstants.HOOD_LOAD_POSITION : pitch);
-
-        // ---- flywheel ----
         double dt = Math.max(0.001, timer.seconds());
         timer.reset();
+
+        // ---- hood ----
+        pitch = clamp(pitch, ShooterConstants.PITCH_MIN, ShooterConstants.PITCH_MAX);
+        pitchServo.setPosition(loading ? ShooterConstants.HOOD_LOAD_POSITION : pitch);
+
+        // ---- turret (PID to the target angle, kept inside the software limits) ----
+        turretTargetDeg = clamp(turretTargetDeg, ShooterConstants.TURRET_MIN_DEG, ShooterConstants.TURRET_MAX_DEG);
+        turretAngleDeg = ShooterConstants.YAW_DIRECTION
+                * turretMotor.getCurrentPosition() / ShooterConstants.TURRET_TICKS_PER_DEG;
+
+        double turretError = turretTargetDeg - turretAngleDeg;
+        double turretOut = ShooterConstants.TURRET_kP * turretError
+                + ShooterConstants.TURRET_kD * (turretError - turretLastError) / dt;
+        turretLastError = turretError;
+        if (Math.abs(turretError) < ShooterConstants.TURRET_DEADBAND_DEG) turretOut = 0;
+
+        // YAW_DIRECTION is applied to both the reading and the power, so flipping it only changes
+        // which way is "left" — it can never make the turret run away
+        turretPower = ShooterConstants.YAW_DIRECTION
+                * clamp(turretOut, -ShooterConstants.TURRET_MAX_POWER, ShooterConstants.TURRET_MAX_POWER);
+        turretMotor.setPower(turretPower);
+
+        // ---- flywheel ----
         double currentTicksPerSec = motor.getVelocity();
         currentRpm = ticksToRpm(currentTicksPerSec);
 
@@ -106,7 +140,7 @@ public class Shooter {
     // Points the turret at the goal and sets hood pitch + RPM from the distance (SHOT_TABLE).
     public void aimAt(Pose robot, Pose goal) {
         double distance = distanceToGoal(robot, goal);
-        yaw = yawForPose(robot, goal);
+        turretTargetDeg = turretAngleForPose(robot, goal);
         pitch = clamp(interpolateShotTable(distance, 1), ShooterConstants.PITCH_MIN, ShooterConstants.PITCH_MAX);
         targetRpm = interpolateShotTable(distance, 2);
     }
@@ -120,7 +154,7 @@ public class Shooter {
 
     //==[MANUAL CONTROLS]===========================================================================
 
-    public void adjustYaw(double delta)   { yaw += delta; }
+    public void adjustYaw(double degrees) { turretTargetDeg += degrees; }
     public void adjustPitch(double delta) { pitch += delta; }
     public void adjustRpm(double delta)   { targetRpm = Math.max(0, targetRpm + delta); }
     public void setRunning(boolean on)    { running = on; }
@@ -138,7 +172,9 @@ public class Shooter {
     public boolean isRunning()     { return running; }
     public boolean isLoading()     { return loading; }
     public boolean isOnBackHalf()  { return onBackHalf; }
-    public double getYaw()         { return yaw; }
+    public double getTurretTargetDeg() { return turretTargetDeg; }
+    public double getTurretAngleDeg()  { return turretAngleDeg; }
+    public double getTurretPower()     { return turretPower; }
     public double getPitch()       { return pitch; }
     public double getTargetRpm()   { return targetRpm; }
     public double getCurrentRpm()  { return currentRpm; }
@@ -166,14 +202,13 @@ public class Shooter {
         return Math.hypot(goal.x() - robot.x(), goal.y() - robot.y());
     }
 
-    // Servo position that points the turret at the goal from the given robot pose.
-    private static double yawForPose(Pose robot, Pose goal) {
+    // Turret angle (degrees, 0 = forward, + = left) that points at the goal from the given robot pose.
+    // If the goal is past a software limit, the turret stops at that limit.
+    private static double turretAngleForPose(Pose robot, Pose goal) {
         double fieldAngle = Math.atan2(goal.y() - robot.y(), goal.x() - robot.x());
         double turretDeg = Math.toDegrees(normalize(fieldAngle - robot.heading())) - ShooterConstants.YAW_OFFSET_DEG;
         turretDeg = Math.toDegrees(normalize(Math.toRadians(turretDeg)));
-        double position = ShooterConstants.YAW_CENTER
-                + ShooterConstants.YAW_DIRECTION * turretDeg / ShooterConstants.YAW_RANGE_DEG;
-        return clamp(position, ShooterConstants.YAW_MIN, ShooterConstants.YAW_MAX);
+        return clamp(turretDeg, ShooterConstants.TURRET_MIN_DEG, ShooterConstants.TURRET_MAX_DEG);
     }
 
     // Blends a SHOT_TABLE column (1 = pitch, 2 = RPM) by distance; holds the end values outside the table.

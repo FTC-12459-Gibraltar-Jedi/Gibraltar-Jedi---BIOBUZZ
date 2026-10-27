@@ -27,12 +27,26 @@ public class ShooterConstants {
     public static final double kF = 0.000421;             // raise if the flywheel can't reach high RPM
 
 
-    //==[TURRET YAW SERVO]==========================================================================
+    //==[TURRET YAW MOTOR]==========================================================================
+    // goBILDA 435 RPM motor, 2.75 motor turns per 1 turret turn.
+    // The encoder only counts from where it was zeroed: point the turret STRAIGHT FORWARD, then
+    // press gamepad 2 X in TeleOp (Jedi_Auto also zeroes it at INIT).
 
-    public static final double YAW_MIN = 0.0;             // servo limits
-    public static final double YAW_MAX = 1.0;
-    public static final double YAW_CENTER = 0.5;          // servo position when the turret points straight ahead
-    public static final double YAW_RANGE_DEG = 300.0;     // degrees the turret turns over the full 0 → 1 servo travel
+    public static final double TURRET_TICKS_PER_MOTOR_REV = 384.5;   // goBILDA 5203 435 RPM
+    public static final double TURRET_GEAR_RATIO = 2.75;             // motor turns per turret turn
+    public static final double TURRET_TICKS_PER_DEG =
+            TURRET_TICKS_PER_MOTOR_REV * TURRET_GEAR_RATIO / 360.0;  // ≈ 2.94
+
+    // ⚠ Software limits so the turret can't twist its wires. 0° = straight forward, + = left.
+    public static final double TURRET_MIN_DEG = -150;
+    public static final double TURRET_MAX_DEG = 150;
+
+    // Turret position PID (power per degree of error). Start gentle and raise kP until it's snappy.
+    public static final double TURRET_kP = 0.02;
+    public static final double TURRET_kD = 0.001;
+    public static final double TURRET_MAX_POWER = 0.6;
+    public static final double TURRET_DEADBAND_DEG = 0.5;           // stop pushing when this close
+
     public static final double YAW_DIRECTION = 1.0;       // flip to -1.0 if the turret aims the wrong way
     public static final double YAW_OFFSET_DEG = 0.0;      // 180 if the shooter faces the back of the robot
 

@@ -47,13 +47,13 @@ public class Jedi_Auto extends OpMode {
 
 
     //==[POSES]=====================================================================================
-    // Written for BLUE in Pedro coordinates (inches, heading in degrees).
-    // Red uses the same numbers mirrored across the middle of the field (x = 72).
+    // Written for RED (red drivers at x = 0) in Pedro coordinates (inches, heading in degrees).
+    // Blue uses the same numbers mirrored across the middle of the field (x = 72).
     // ⚠ MEASURE THESE ON YOUR FIELD.
 
     private void buildPoses() {
         PoseFactory p = PoseFactory.degrees();
-        if (!blueAlliance) p = p.mirrorX(72);
+        if (blueAlliance) p = p.mirrorX(72);
 
         startPose = p.of(24, 12, 90);
         shootPose = p.of(48, 48, 90);
@@ -121,6 +121,9 @@ public class Jedi_Auto extends OpMode {
 
         follower = Constants.create(hardwareMap);
         shooter = new Shooter(hardwareMap);
+
+        // the turret must be set STRAIGHT FORWARD before INIT; this makes that 0° for auto and TeleOp
+        shooter.zeroTurret();
     }
 
     @Override

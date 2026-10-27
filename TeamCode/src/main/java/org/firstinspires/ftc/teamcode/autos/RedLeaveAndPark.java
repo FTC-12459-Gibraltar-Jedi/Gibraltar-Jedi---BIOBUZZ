@@ -20,14 +20,15 @@ public class RedLeaveAndPark extends LeaveAndParkBase {
 
     //==[START POSES]===============================================================================
 
-    private static final Pose LEFT_CLOSE_START  = p.of(96, 12, 90);
-    private static final Pose RIGHT_CLOSE_START = p.of(120, 12, 90);
-    private static final Pose RIGHT_FAR_START   = p.of(120, 132, 270);
+    // Red is on the x = 0 side of the field.
+    private static final Pose LEFT_CLOSE_START  = p.of(24, 12, 90);
+    private static final Pose RIGHT_CLOSE_START = p.of(48, 12, 90);
+    private static final Pose RIGHT_FAR_START   = p.of(48, 132, 270);
 
     //==[PARK POSES]================================================================================
 
-    private static final Pose PARK_LEFT  = p.of(96, 72, 90);
-    private static final Pose PARK_RIGHT = p.of(120, 72, 90);
+    private static final Pose PARK_LEFT  = p.of(24, 72, 90);
+    private static final Pose PARK_RIGHT = p.of(48, 72, 90);
 
 
     public RedLeaveAndPark() {
