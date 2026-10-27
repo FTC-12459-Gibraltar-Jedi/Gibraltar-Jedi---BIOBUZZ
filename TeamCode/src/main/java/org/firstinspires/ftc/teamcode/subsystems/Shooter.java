@@ -203,11 +203,21 @@ public class Shooter {
     }
 
     // Turret angle (degrees, 0 = forward, + = left) that points at the goal from the given robot pose.
-    // If the goal is past a software limit, the turret stops at that limit.
-    private static double turretAngleForPose(Pose robot, Pose goal) {
+    // Goes up to 180° each way. When the goal crosses directly behind, the turret holds at the limit
+    // until the goal is TURRET_SNAP_HYSTERESIS_DEG past it, then snaps around to the other side.
+    private double turretAngleForPose(Pose robot, Pose goal) {
         double fieldAngle = Math.atan2(goal.y() - robot.y(), goal.x() - robot.x());
         double turretDeg = Math.toDegrees(normalize(fieldAngle - robot.heading())) - ShooterConstants.YAW_OFFSET_DEG;
-        turretDeg = Math.toDegrees(normalize(Math.toRadians(turretDeg)));
+        turretDeg = Math.toDegrees(normalize(Math.toRadians(turretDeg)));   // -180 .. 180
+
+        double band = ShooterConstants.TURRET_SNAP_HYSTERESIS_DEG;
+        boolean onLeftSide = turretTargetDeg > 90;     // + side, near the +180 limit
+        boolean onRightSide = turretTargetDeg < -90;   // - side, near the -180 limit
+
+        // goal just crossed behind: stay pinned on the side we're already on instead of snapping
+        if (onLeftSide && turretDeg < -180 + band) return ShooterConstants.TURRET_MAX_DEG;
+        if (onRightSide && turretDeg > 180 - band) return ShooterConstants.TURRET_MIN_DEG;
+
         return clamp(turretDeg, ShooterConstants.TURRET_MIN_DEG, ShooterConstants.TURRET_MAX_DEG);
     }
 

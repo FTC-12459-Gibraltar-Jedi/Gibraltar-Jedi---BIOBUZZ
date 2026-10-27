@@ -38,8 +38,11 @@ public class ShooterConstants {
             TURRET_TICKS_PER_MOTOR_REV * TURRET_GEAR_RATIO / 360.0;  // ≈ 2.94
 
     // ⚠ Software limits so the turret can't twist its wires. 0° = straight forward, + = left.
-    public static final double TURRET_MIN_DEG = -150;
-    public static final double TURRET_MAX_DEG = 150;
+    // The turret turns up to 180° each way. When the goal crosses directly behind the robot it
+    // waits at the limit until the goal is SNAP_HYSTERESIS past it, then swings around to the other side.
+    public static final double TURRET_MIN_DEG = -180;
+    public static final double TURRET_MAX_DEG = 180;
+    public static final double TURRET_SNAP_HYSTERESIS_DEG = 10;      // stops it flipping back and forth right behind
 
     // Turret position PID (power per degree of error). Start gentle and raise kP until it's snappy.
     public static final double TURRET_kP = 0.02;
