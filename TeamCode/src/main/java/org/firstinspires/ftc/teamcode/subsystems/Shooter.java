@@ -45,7 +45,7 @@ public class Shooter {
     private double targetRpm = ShooterConstants.TARGET_RPM; // flywheel target
     private boolean running = false;                        // flywheel on/off
     private boolean loading = false;                        // hood parked for a hood swap (flywheel forced off)
-    private boolean onBackHalf = false;                     // which half of the field we're aiming from
+    private boolean onFarHalf = false;                      // true = above y 72 (far goal), false = below (close goal)
 
     // flywheel PIDF bookkeeping
     private final ElapsedTime timer = new ElapsedTime();
@@ -53,7 +53,7 @@ public class Shooter {
     private double currentRpm = 0.0;
     private double power = 0.0;
 
-    // turret PID bookkeeping
+    // turret PID bookkeepingz
     private double turretLastError = 0.0;
     private double turretPower = 0.0;
 
@@ -132,9 +132,9 @@ public class Shooter {
     public Pose goalFor(Pose robot, boolean blueAlliance) {
         double line = FieldConstants.FIELD_MIDLINE_Y;
         double band = FieldConstants.MIDLINE_DEADBAND;
-        if (robot.y() > line + band) onBackHalf = true;
-        if (robot.y() < line - band) onBackHalf = false;
-        return FieldConstants.goalFor(blueAlliance, onBackHalf);
+        if (robot.y() > line + band) onFarHalf = true;
+        if (robot.y() < line - band) onFarHalf = false;
+        return FieldConstants.goalFor(blueAlliance, onFarHalf);
     }
 
     // Points the turret at the goal and sets hood pitch + RPM from the distance (SHOT_TABLE).
@@ -171,7 +171,7 @@ public class Shooter {
 
     public boolean isRunning()     { return running; }
     public boolean isLoading()     { return loading; }
-    public boolean isOnBackHalf()  { return onBackHalf; }
+    public boolean isOnFarHalf()   { return onFarHalf; }
     public double getTurretTargetDeg() { return turretTargetDeg; }
     public double getTurretAngleDeg()  { return turretAngleDeg; }
     public double getTurretPower()     { return turretPower; }

@@ -67,13 +67,13 @@ public class FieldConstants {
     //==[GOALS]=====================================================================================
     // The field is split in half at y = FIELD_MIDLINE_Y.
     // Auto aim shoots at OUR alliance's goal on whichever half the robot is on:
-    //   AUDIENCE goal = robot is below the midline      BACK goal = robot is above the midline
+    //   CLOSE goal = robot is below the midline (y < 72)      FAR goal = robot is above it (y > 72)
 
-    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(84, 50, 0);
-    public static final Pose BLUE_GOAL_BACK     = new Pose(84, 90, 0);
+    public static final Pose BLUE_GOAL_CLOSE = new Pose(84, 50, 0);
+    public static final Pose BLUE_GOAL_FAR   = new Pose(84, 90, 0);
 
-    public static final Pose RED_GOAL_AUDIENCE  = new Pose(58, 50, 0);
-    public static final Pose RED_GOAL_BACK      = new Pose(58, 90, 0);
+    public static final Pose RED_GOAL_CLOSE  = new Pose(58, 50, 0);
+    public static final Pose RED_GOAL_FAR    = new Pose(58, 90, 0);
 
     public static final double FIELD_MIDLINE_Y  = 72;
     public static final double MIDLINE_DEADBAND = 2;   // inches past the line before switching, so it doesn't flicker
@@ -81,9 +81,9 @@ public class FieldConstants {
 
     //==[HELPERS]===================================================================================
 
-    public static Pose goalFor(boolean blueAlliance, boolean backHalf) {
-        if (blueAlliance) return backHalf ? BLUE_GOAL_BACK : BLUE_GOAL_AUDIENCE;
-        return backHalf ? RED_GOAL_BACK : RED_GOAL_AUDIENCE;
+    public static Pose goalFor(boolean blueAlliance, boolean farHalf) {
+        if (blueAlliance) return farHalf ? BLUE_GOAL_FAR : BLUE_GOAL_CLOSE;
+        return farHalf ? RED_GOAL_FAR : RED_GOAL_CLOSE;
     }
 
     public static Pose startPose(boolean blueAlliance) {

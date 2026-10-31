@@ -273,7 +273,7 @@ public class Jedi_Tele extends OpMode {
 
         telemetry.addLine("──────── AIM ────────");
         telemetry.addData("Auto Aim", autoAim ? "ON" : "off");
-        telemetry.addData("Aiming At", alliance + (shooter.isOnBackHalf() ? " BACK" : " AUDIENCE") + " goal");
+        telemetry.addData("Aiming At", alliance + (shooter.isOnFarHalf() ? " FAR" : " CLOSE") + " goal");
         telemetry.addData("Goal Distance", String.format(Locale.US, "%.1f in", goalDistance));
         telemetry.addData("Turret", String.format(Locale.US, "%.1f° / %.1f° target   (power %.2f)",
                 shooter.getTurretAngleDeg(), shooter.getTurretTargetDeg(), shooter.getTurretPower()));
