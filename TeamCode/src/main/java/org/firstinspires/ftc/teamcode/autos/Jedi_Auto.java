@@ -163,6 +163,7 @@ public class Jedi_Auto extends OpMode {
         // hand our final position and alliance to TeleOp (position only if auto actually ran)
         if (startPose != null) {
             OpModeStorage.autonomousEndPose = follower.pose();
+            OpModeStorage.turretZeroedByAuto = true;
         }
         OpModeStorage.blueAlliance = blueAlliance;
     }

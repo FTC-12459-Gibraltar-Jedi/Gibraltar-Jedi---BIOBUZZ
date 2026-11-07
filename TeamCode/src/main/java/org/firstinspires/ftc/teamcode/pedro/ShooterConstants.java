@@ -38,10 +38,11 @@ public class ShooterConstants {
             TURRET_TICKS_PER_MOTOR_REV * TURRET_GEAR_RATIO / 360.0;  // ≈ 2.94
 
     // ⚠ Software limits so the turret can't twist its wires. 0° = straight forward, + = left.
-    // The turret turns up to 180° each way. When the goal crosses directly behind the robot it
-    // waits at the limit until the goal is SNAP_HYSTERESIS past it, then swings around to the other side.
-    public static final double TURRET_MIN_DEG = -180;
-    public static final double TURRET_MAX_DEG = 180;
+    // The turret turns up to 150° each way (300° total). If the goal goes past the limit it waits
+    // there; once the goal crosses directly behind the robot (+ SNAP_HYSTERESIS) it swings around
+    // to the limit on the other side.
+    public static final double TURRET_MIN_DEG = -150;
+    public static final double TURRET_MAX_DEG = 150;
     public static final double TURRET_SNAP_HYSTERESIS_DEG = 10;      // stops it flipping back and forth right behind
 
     // Turret position PID (power per degree of error). Start gentle and raise kP until it's snappy.
@@ -76,7 +77,7 @@ public class ShooterConstants {
     public static final double[][] SHOT_TABLE = {
             //  distance   pitch   RPM
             {    36.0,     0.05,   2600 },   // row 0 — close
-            {    72.0,     0.15,   3100 },   // row 1 — middle
-            {   120.0,     0.28,   3700 },   // row 2 — far
+            {    72.0,     0.17,   3200 },   // row 1 — middle   (was 0.15 / 3100)
+            {   120.0,     0.26,   3600 },   // row 2 — far      (was 0.28 / 3700)
     };
 }

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.autos;
 
 import static com.pedropathing.api.Paths.line;
+import static com.pedropathing.api.Paths.path;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
@@ -26,8 +27,8 @@ import java.util.Locale;
  *   Dpad up / down ...... pick the row (Start or End)
  *   Dpad left / right ... change the option on that row
  *
- *  Drives in a straight line from the chosen start to the chosen park spot, then hands the
- *  final position and alliance to TeleOp.
+ *  Drives from the chosen start to the chosen park spot, then hands the final position and
+ *  alliance to TeleOp. If that start has a WAYPOINT, it drives to the waypoint first.
  */
 public abstract class LeaveAndParkBase extends OpMode {
 
@@ -42,13 +43,17 @@ public abstract class LeaveAndParkBase extends OpMode {
 
     private final boolean blueAlliance;
     private final Pose[] startPoses;
+    private final Pose[] waypoints;     // one per start; null = drive straight to park
     private final Pose[] parkPoses;
 
     protected LeaveAndParkBase(boolean blueAlliance,
-                               Pose leftCloseStart, Pose rightCloseStart, Pose rightFarStart,
+                               Pose leftCloseStart, Pose leftCloseWaypoint,
+                               Pose rightCloseStart, Pose rightCloseWaypoint,
+                               Pose rightFarStart, Pose rightFarWaypoint,
                                Pose parkLeft, Pose parkRight) {
         this.blueAlliance = blueAlliance;
         this.startPoses = new Pose[] { leftCloseStart, rightCloseStart, rightFarStart };
+        this.waypoints = new Pose[] { leftCloseWaypoint, rightCloseWaypoint, rightFarWaypoint };
         this.parkPoses = new Pose[] { parkLeft, parkRight };
     }
 
@@ -67,8 +72,19 @@ public abstract class LeaveAndParkBase extends OpMode {
 
     private Path leaveAndPark() {
         Pose from = startPoses[start];
+        Pose via = waypoints[start];
         Pose to = parkPoses[park];
-        return line(from, to).linear(from, to);
+
+        // no waypoint: one straight line, turning smoothly from the start heading to the park heading
+        if (via == null) {
+            return line(from, to).linear(from, to);
+        }
+
+        // waypoint: drive out to it first, then over to park holding the park heading
+        return path(
+                line(from, via).linear(from, via),
+                line(via, to).constant(to)
+        );
     }
 
 

@@ -19,4 +19,8 @@ public class OpModeStorage {
 
     // alliance picked in auto, so TeleOp starts already set up
     public static boolean blueAlliance = true;
+
+    // true = Jedi_Auto zeroed the turret and then moved it, so TeleOp must keep that zero
+    // instead of re-zeroing wherever the turret ended up
+    public static boolean turretZeroedByAuto = false;
 }

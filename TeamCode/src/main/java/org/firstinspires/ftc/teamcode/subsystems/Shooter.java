@@ -155,6 +155,7 @@ public class Shooter {
     //==[MANUAL CONTROLS]===========================================================================
 
     public void adjustYaw(double degrees) { turretTargetDeg += degrees; }
+    public void setTurretTargetDeg(double degrees) { turretTargetDeg = degrees; }   // 0 = straight forward
     public void adjustPitch(double delta) { pitch += delta; }
     public void adjustRpm(double delta)   { targetRpm = Math.max(0, targetRpm + delta); }
     public void setRunning(boolean on)    { running = on; }
@@ -203,8 +204,8 @@ public class Shooter {
     }
 
     // Turret angle (degrees, 0 = forward, + = left) that points at the goal from the given robot pose.
-    // Goes up to 180° each way. When the goal crosses directly behind, the turret holds at the limit
-    // until the goal is TURRET_SNAP_HYSTERESIS_DEG past it, then snaps around to the other side.
+    // Goes up to TURRET_MIN/MAX_DEG each way and waits at the limit if the goal is past it. Once the
+    // goal crosses directly behind (+ TURRET_SNAP_HYSTERESIS_DEG), it snaps around to the other side.
     private double turretAngleForPose(Pose robot, Pose goal) {
         double fieldAngle = Math.atan2(goal.y() - robot.y(), goal.x() - robot.x());
         double turretDeg = Math.toDegrees(normalize(fieldAngle - robot.heading())) - ShooterConstants.YAW_OFFSET_DEG;

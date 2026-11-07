@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.OpModeStorage;
 import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 import java.util.Locale;
@@ -21,17 +22,20 @@ import java.util.Locale;
  *  INIT (either gamepad)
  *  ─────────────────────
  *   X / B ............ Blue / Red alliance (already set if an auto ran)
+ *   Turret ........... Point it FORWARD before INIT: its position at INIT becomes 0°
+ *                      (skipped right after Jedi_Auto, which zeroes it itself)
  *
  *  GAMEPAD 1 — DRIVER
  *  ──────────────────
  *   Left stick ....... Drive (field-centric: forward = away from your drivers)
  *   Right stick X .... Turn
- *   Left bumper ...... Hold for FULL speed (normal is 50%)
+ *   Left bumper ...... Hold for SLOW mode, 50% (normal is full speed)
  *   Y ................ Reset heading (point robot away from drivers first)
  *   Dpad left ........ Relocalize: robot is in OUR LEFT corner
  *   Dpad right ....... Relocalize: robot is in OUR RIGHT corner
  *   A ................ Toggle flywheel on/off
- *   Right trigger .... Hold to run flywheel
+ *   Right trigger .... Intake (pull harder = faster)
+ *   Left trigger ..... Outtake / spit out (pull harder = faster)
  *
  *  GAMEPAD 2 — OPERATOR
  *  ────────────────────
@@ -52,7 +56,7 @@ public class Jedi_Tele extends OpMode {
 
     //==[SETTINGS]==================================================================================
 
-    private static final double SLOW_SPEED = 0.5;          // drive speed without left bumper
+    private static final double SLOW_SPEED = 0.5;          // drive speed while left bumper is held
     private static final double RPM_STEP = 50;             // RPM per bumper press (gamepad 2)
     private static final double YAW_STICK_SPEED = 2.0;     // manual turret speed (degrees per loop)
     private static final double PITCH_STICK_SPEED = 0.005; // manual hood speed
@@ -63,6 +67,7 @@ public class Jedi_Tele extends OpMode {
 
     private Follower follower;           // Pedro Pathing: drivetrain + odometry
     private Shooter shooter;             // flywheel, turret, hood
+    private Intake intake;               // intake motor (direction setting is in subsystems/Intake)
     private GoBildaPrismDriver prism;    // LEDs (null if "prism" isn't in the robot configuration)
 
 
@@ -85,6 +90,16 @@ public class Jedi_Tele extends OpMode {
     public void init() {
         follower = Constants.create(hardwareMap);
         shooter = new Shooter(hardwareMap);
+
+        // turret: wherever it is at INIT becomes 0° (forward) — unless Jedi_Auto just ran, because
+        // auto already zeroed it facing forward and then aimed it somewhere else
+        if (OpModeStorage.turretZeroedByAuto) {
+            OpModeStorage.turretZeroedByAuto = false;
+        } else {
+            shooter.zeroTurret();
+        }
+
+        intake = new Intake(hardwareMap);
 
         // tryGet: run without LEDs instead of crashing if the Prism isn't configured
         prism = hardwareMap.tryGet(GoBildaPrismDriver.class, "prism");
@@ -122,6 +137,7 @@ public class Jedi_Tele extends OpMode {
         Pose robotPose = follower.pose();
         updateTurretAndHood(robotPose);
         updateFlywheel();
+        updateIntake();
 
         updateTelemetry(robotPose);
     }
@@ -158,8 +174,8 @@ public class Jedi_Tele extends OpMode {
             moveHoldTarget(corner);
         }
 
-        // ---- sticks: field-centric drive, 50% speed unless left bumper is held ----
-        double speed = gamepad1.left_bumper ? 1.0 : SLOW_SPEED;
+        // ---- sticks: field-centric drive, full speed unless left bumper is held (then 50%) ----
+        double speed = gamepad1.left_bumper ? SLOW_SPEED : 1.0;
 
         DrivePowers powers = ManualDrive.fieldCentric(
                 -gamepad1.left_stick_y * speed,
@@ -230,11 +246,20 @@ public class Jedi_Tele extends OpMode {
 
         flywheelOn = flywheelToggled
                 || autoAim
-                || gamepad1.right_trigger > TRIGGER_THRESHOLD
                 || gamepad2.right_trigger > TRIGGER_THRESHOLD;
 
         shooter.setRunning(flywheelOn);
         shooter.update();
+    }
+
+
+    // =============================================================================================
+    //  INTAKE   (gamepad 1 triggers: right = in, left = out)
+    // =============================================================================================
+
+    private void updateIntake() {
+        // both triggers are 0 → 1; pulling both at once cancels out
+        intake.setPower(gamepad1.right_trigger - gamepad1.left_trigger);
     }
 
 
@@ -269,7 +294,9 @@ public class Jedi_Tele extends OpMode {
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Position", String.format(Locale.US, "x %.1f   y %.1f   heading %.0f°",
                 robotPose.x(), robotPose.y(), Math.toDegrees(robotPose.heading())));
-        telemetry.addData("Drive Speed", gamepad1.left_bumper ? "FULL" : "50%");
+        telemetry.addData("Drive Speed", gamepad1.left_bumper ? "50% (slow)" : "FULL");
+        telemetry.addData("Intake", String.format(Locale.US, "%.2f  (+ in / - out)",
+                gamepad1.right_trigger - gamepad1.left_trigger));
 
         telemetry.addLine("──────── AIM ────────");
         telemetry.addData("Auto Aim", autoAim ? "ON" : "off");
